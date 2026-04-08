@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/first.xml
+
+#spring:
+#  liquibase:
+#    change-log: classpath:db/changelog/first.xml

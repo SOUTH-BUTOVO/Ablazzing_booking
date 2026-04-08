@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="202604021830-types" author="SOUTH_BUTOVO">
+        <comment>Создание типов ENUM для объявлений и комнат</comment>
+        <sql dbms="postgresql" splitStatements="false">
+            create extension if not exists citext;
+            create extension if not exists btree_gist;
+            do $$
+            begin
+                if not exists (select 1 from pg_type where typname = 'advert_status') then
+                    create type advert_status as enum('ACTIVE', 'ARCHIVED');
+                end if;
+            end $$;
+
+            do $$
+            begin
+                if not exists (select 1 from pg_type where typname = 'apartment_room_count') then
+                    create type apartment_room_count as enum('ROOM', 'ONE', 'TWO', 'THREE', 'FOUR_PLUS');
+                end if;
+            end $$;
+        </sql>
+        <rollback>
+            <sql>
+                drop type if exists advert_status cascade;
+                drop type if exists apartment_room_count cascade;
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="202604021830-apartment" author="SOUTH_BUTOVO">
+        <createTable tableName="apartment">
+            <column name="id" type="bigint" autoIncrement="true" generationType="always">
+                <constraints primaryKey="true" primaryKeyName="pk_apartment_id"/>
+            </column>
+            <column name="city" type="varchar(25)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="street" type="varchar(132)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="house" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="corpus" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="room_count" type="apartment_room_count">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <rollback>
+            <dropTable tableName="apartment"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="202604021830-advert" author="SOUTH_BUTOVO">
+        <createTable tableName="advert">
+            <column name="id" type="bigint" autoIncrement="true" generationType="always">
+                <constraints primaryKey="true" primaryKeyName="pk_advert_id"/>
+            </column>
+            <column name="price" type="decimal(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="advert_status">
+                <constraints nullable="false"/>
+            </column>
+            <column name="apartment_id" type="bigint">
+                <constraints nullable="false"
+                             referencedTableName="apartment"
+                             referencedColumnNames="id"
+                             foreignKeyName="fk_advert_apartment"/>
+            </column>
+            <column name="description" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="advert" indexName="idx_advert_apartment_id">
+            <column name="apartment_id"/>
+        </createIndex>
+        <sql>
+            alter table advert add constraint chk_advert_price check(price >= 0);
+        </sql>
+        <rollback>
+            <sql>
+                alter table advert drop constraint if exists chk_advert_price;
+            </sql>
+            <dropTable tableName="advert"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="202604021830-client" author="SOUTH_BUTOVO">
+        <createTable tableName="client">
+            <column name="id" type="bigint" autoIncrement="true" generationType="always">
+                <constraints primaryKey="true" primaryKeyName="pk_client_id"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="citext">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_client_email"/>
+            </column>
+        </createTable>
+        <sql>
+            alter table client add constraint chk_client_email_format check(position('@' in email) > 1);
+        </sql>
+        <rollback>
+            <sql>
+                alter table client drop constraint if exists chk_client_email_format;
+            </sql>
+            <dropTable tableName="client"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="202604021830-booking" author="SOUTH_BUTOVO">
+        <createTable tableName="booking">
+            <column name="id" type="bigint" autoIncrement="true" generationType="always">
+                <constraints primaryKey="true" primaryKeyName="pk_booking_id"/>
+            </column>
+            <column name="start_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_id" type="bigint">
+                <constraints nullable="false"
+                             referencedTableName="client"
+                             referencedColumnNames="id"
+                             foreignKeyName="fk_booking_client"/>
+            </column>
+            <column name="advert_id" type="bigint">
+                <constraints nullable="false"
+                             referencedTableName="advert"
+                             referencedColumnNames="id"
+                             foreignKeyName="fk_booking_advert"/>
+            </column>
+            <column name="total_price" type="decimal(10,2)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="booking" indexName="idx_booking_client_id">
+            <column name="client_id"/>
+        </createIndex>
+        <createIndex tableName="booking" indexName="idx_booking_advert_id">
+            <column name="advert_id"/>
+        </createIndex>
+        <sql dbms="postgresql">
+            alter table booking
+            add constraint no_overlapping_bookings
+            exclude using gist (advert_id with =, daterange(start_date, end_date, '[]') with &amp;&amp;);
+        </sql>
+        <sql>
+            alter table booking add constraint chk_booking_dates check(end_date >= start_date);
+            alter table booking add constraint chk_booking_price check(total_price >= 0);
+        </sql>
+        <rollback>
+            <sql>
+                alter table booking drop constraint if exists chk_booking_dates;
+                alter table booking drop constraint if exists chk_booking_price;
+                alter table booking drop constraint if exists no_overlapping_bookings;
+            </sql>
+            <dropTable tableName="booking"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
