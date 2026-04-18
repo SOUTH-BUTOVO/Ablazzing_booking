@@ -34,7 +34,6 @@ public class Apartment {
 
     @Column(nullable = false)
     @Size(max = 10, message = "Максимальная длинна корпуса 10")
-    @NotBlank(message = "Должен быть корпус дома")
     private String corpus;
 
     @Column(name = "room_count", columnDefinition = "apartment_room_count", nullable = false)

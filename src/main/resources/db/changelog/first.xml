@@ -5,17 +5,17 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
     https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
-    <changeSet id="202604021830-types" author="SOUTH_BUTOVO">
+    <changeSet id="202604171530-types" author="SOUTH_BUTOVO">
         <comment>Создание типов ENUM для объявлений и комнат</comment>
         <sql dbms="postgresql" splitStatements="false">
             create extension if not exists citext;
             create extension if not exists btree_gist;
-            do $$
-            begin
-                if not exists (select 1 from pg_type where typname = 'advert_status') then
-                    create type advert_status as enum('ACTIVE', 'ARCHIVED');
-                end if;
-            end $$;
+<!--            do $$-->
+<!--            begin-->
+<!--                if not exists (select 1 from pg_type where typname = 'advert_status') then-->
+<!--                    create type advert_status as enum('ACTIVE', 'ARCHIVED');-->
+<!--                end if;-->
+<!--            end $$;-->
 
             do $$
             begin
@@ -26,13 +26,13 @@
         </sql>
         <rollback>
             <sql>
-                drop type if exists advert_status cascade;
+<!--                drop type if exists advert_status cascade;-->
                 drop type if exists apartment_room_count cascade;
             </sql>
         </rollback>
     </changeSet>
 
-    <changeSet id="202604021830-apartment" author="SOUTH_BUTOVO">
+    <changeSet id="202604171530-apartment" author="SOUTH_BUTOVO">
         <createTable tableName="apartment">
             <column name="id" type="bigint" autoIncrement="true" generationType="always">
                 <constraints primaryKey="true" primaryKeyName="pk_apartment_id"/>
@@ -46,7 +46,7 @@
             <column name="house" type="varchar(15)">
                 <constraints nullable="false"/>
             </column>
-            <column name="corpus" type="varchar(10)">
+            <column name="corpus" type="varchar(10)" defaultValue="нет">
                 <constraints nullable="false"/>
             </column>
             <column name="room_count" type="apartment_room_count">
@@ -58,7 +58,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="202604021830-advert" author="SOUTH_BUTOVO">
+    <changeSet id="202604171530-advert" author="SOUTH_BUTOVO">
         <createTable tableName="advert">
             <column name="id" type="bigint" autoIncrement="true" generationType="always">
                 <constraints primaryKey="true" primaryKeyName="pk_advert_id"/>
@@ -66,7 +66,7 @@
             <column name="price" type="decimal(10,2)">
                 <constraints nullable="false"/>
             </column>
-            <column name="status" type="advert_status">
+            <column name="is_active" type="bool" defaultValueBoolean="true">
                 <constraints nullable="false"/>
             </column>
             <column name="apartment_id" type="bigint">
@@ -93,7 +93,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="202604021830-client" author="SOUTH_BUTOVO">
+    <changeSet id="202604171530-client" author="SOUTH_BUTOVO">
         <createTable tableName="client">
             <column name="id" type="bigint" autoIncrement="true" generationType="always">
                 <constraints primaryKey="true" primaryKeyName="pk_client_id"/>
@@ -116,7 +116,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="202604021830-booking" author="SOUTH_BUTOVO">
+    <changeSet id="202604171530-booking" author="SOUTH_BUTOVO">
         <createTable tableName="booking">
             <column name="id" type="bigint" autoIncrement="true" generationType="always">
                 <constraints primaryKey="true" primaryKeyName="pk_booking_id"/>

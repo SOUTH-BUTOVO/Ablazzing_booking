@@ -25,10 +25,9 @@ public class Advert {
     @PositiveOrZero
     private BigDecimal price;
 
-    @Column(name = "status", columnDefinition = "advert_status", nullable = false)
+    @Column(name = "is_active", nullable = false)
     @NotNull
-    @Enumerated(EnumType.STRING)
-    private RoomStatus status;
+    private Boolean isActive;
 
     @JoinColumn(name = "apartment_id", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -61,8 +60,8 @@ public class Advert {
         return "Advert{" +
                 "id=" + id +
                 ", price=" + price +
-                ", status=" + status +
-                ", apartment=" + apartment +
+                ", isActive=" + isActive +
+                ", apartmentId=" + (apartment != null ? apartment.getId() : null) +
                 ", description='" + description + '\'' +
                 '}';
     }
