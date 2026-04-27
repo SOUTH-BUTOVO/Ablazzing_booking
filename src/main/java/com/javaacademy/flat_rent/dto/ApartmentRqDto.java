@@ -1,5 +1,6 @@
 package com.javaacademy.flat_rent.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.javaacademy.flat_rent.entity.RoomCount;
 
 public record ApartmentRqDto(Long id,
@@ -7,5 +8,5 @@ public record ApartmentRqDto(Long id,
                              String street,
                              String house,
                              String corpus,
-                             RoomCount roomCount) {
-}
+                             @JsonProperty(value = "apartment_type")
+                             RoomCount roomCount) {}

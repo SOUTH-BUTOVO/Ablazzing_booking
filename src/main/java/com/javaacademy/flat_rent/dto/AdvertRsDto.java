@@ -1,11 +1,12 @@
 package com.javaacademy.flat_rent.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
-import java.util.Set;
 
 public record AdvertRsDto(Long id,
                           BigDecimal price,
+                          @JsonProperty(value = "is_active")
                           Boolean isActive,
-                          Long apartment,
-                          String description,
-                          Set<Long> bookings) {}
+                          ApartmentRsDto apartment,
+                          String description) {}
