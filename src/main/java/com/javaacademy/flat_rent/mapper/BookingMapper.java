@@ -9,8 +9,8 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface BookingMapper {
 
-    @Mapping(target = "client", ignore = true)
     @Mapping(target = "advert", ignore = true)
+    @Mapping(target = "client", ignore = true)
     @Mapping(target = "totalPrice", ignore = true)
     Booking toEntity(BookingRqDto dto);
 

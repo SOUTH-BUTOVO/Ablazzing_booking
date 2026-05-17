@@ -40,9 +40,18 @@ public class Booking {
     @NotNull
     private Advert advert;
 
+    @JoinColumn(name = "apartment_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Apartment apartment;
+
     @Column(name = "total_price", nullable = false)
     @PositiveOrZero
     private BigDecimal totalPrice;
+
+    public void assignAdvert(Advert advert) {
+        this.advert = advert;
+        this.apartment = advert.getApartment();
+    }
 
     @AssertTrue(message = "Дата окончания должна быть после даты начала или равна")
     private boolean isEndValidStart() {

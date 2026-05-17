@@ -6,6 +6,8 @@ import com.javaacademy.flat_rent.entity.Advert;
 import com.javaacademy.flat_rent.mapper.AdvertMapper;
 import com.javaacademy.flat_rent.repository.AdvertRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,5 +25,11 @@ public class AdvertService {
         AdvertRsDto rsDto = advertMapper.toDto(saved);
         System.out.println(rsDto);
         return rsDto;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AdvertRsDto> findAllByCity(String city, Pageable pageable) {
+        return advertRepository.findAllByApartmentCity(city, pageable)
+                .map(advertMapper::toDto);
     }
 }

@@ -82,6 +82,9 @@
         <createIndex tableName="advert" indexName="idx_advert_apartment_id">
             <column name="apartment_id"/>
         </createIndex>
+        <createIndex tableName="advert" indexName="idx_advert_price">
+            <column name="price"/>
+        </createIndex>
         <sql>
             alter table advert add constraint chk_advert_price check(price >= 0);
         </sql>
@@ -105,6 +108,9 @@
                 <constraints nullable="false" unique="true" uniqueConstraintName="uq_client_email"/>
             </column>
         </createTable>
+        <createIndex tableName="client" indexName="idx_client_email">
+            <column name="email"/>
+        </createIndex>
         <sql>
             alter table client add constraint chk_client_email_format check(position('@' in email) > 1);
         </sql>
@@ -139,21 +145,29 @@
                              referencedColumnNames="id"
                              foreignKeyName="fk_booking_advert"/>
             </column>
+            <column name="apartment_id" type="bigint">
+                <constraints nullable="false"
+                             referencedTableName="apartment"
+                             referencedColumnNames="id"
+                             foreignKeyName="fk_booking_apartment"/>
+            </column>
             <column name="total_price" type="decimal(10,2)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
-
         <createIndex tableName="booking" indexName="idx_booking_client_id">
             <column name="client_id"/>
         </createIndex>
         <createIndex tableName="booking" indexName="idx_booking_advert_id">
             <column name="advert_id"/>
         </createIndex>
+        <createIndex tableName="booking" indexName="idx_booking_apartment_id">
+            <column name="apartment_id"/>
+        </createIndex>
         <sql dbms="postgresql">
             alter table booking
             add constraint no_overlapping_bookings
-            exclude using gist (advert_id with =, daterange(start_date, end_date, '[]') with &amp;&amp;);
+            exclude using gist (apartment_id with =, daterange(start_date, end_date, '[)') with &amp;&amp;);
         </sql>
         <sql>
             alter table booking add constraint chk_booking_dates check(end_date >= start_date);
