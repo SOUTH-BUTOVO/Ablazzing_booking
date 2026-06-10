@@ -19,9 +19,6 @@ public class ApartmentService {
     public ApartmentRsDto save(ApartmentRqDto dto) {
         Apartment apartment = apartmentMapper.toEntity(dto);
         Apartment saved = apartmentRepository.save(apartment);
-        System.out.println(saved);
-        ApartmentRsDto rsDto = apartmentMapper.toDto(saved);
-        System.out.println(rsDto);
-        return rsDto;
+        return apartmentMapper.toDto(saved);
     }
 }

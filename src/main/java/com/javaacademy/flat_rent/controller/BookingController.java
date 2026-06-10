@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,12 +21,14 @@ public class BookingController {
     private final BookingService bookingService;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public void create(@Valid @RequestBody BookingRqDto dto) {
         bookingService.save(dto);
     }
 
     @GetMapping("/by-email")
     @PageableAsQueryParam
+    @ResponseStatus(HttpStatus.OK)
     public Page<BookingRsDto> getAllBookingsByEmail(@RequestParam @Email String email,
                                                     @PageableDefault(size = 20,
                                                                      sort = "startDate",

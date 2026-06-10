@@ -23,13 +23,8 @@ public class ClientService {
     @Transactional
     public ClientRsDto save(ClientRqDto dto) {
         clientValidator.validateClientRequest(dto);
-
         Client client = clientRepository.save(clientMapper.toEntity(dto));
-
-        System.out.println(client);
-        ClientRsDto clientRsDto = clientMapper.toDto(client);
-        System.out.println(clientRsDto);
-        return clientRsDto;
+        return clientMapper.toDto(client);
     }
 
     @Transactional
@@ -41,7 +36,7 @@ public class ClientService {
         clientRepository.deleteById(id);
     }
 
-    public Client resolveOrCreateClient(ClientRqDto dto) {
+    public Client findExistingOrCreateClient(ClientRqDto dto) {
         clientValidator.validateClientRequest(dto);
         if (dto.id() != null) {
             return clientRepository.findById(dto.id()).orElseThrow(() ->

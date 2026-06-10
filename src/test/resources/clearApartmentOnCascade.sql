@@ -1,0 +1,1 @@
+truncate table apartment cascade;

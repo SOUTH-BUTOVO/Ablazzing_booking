@@ -1,6 +1,7 @@
 package com.javaacademy.flat_rent.repository;
 
 import com.javaacademy.flat_rent.entity.Booking;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
@@ -36,4 +38,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Modifying
     @Query(value = "delete from Booking b where b.client.id = :clientId")
     void deleteAllByClientId(@Param("clientId") Long clientId);
+
+    @EntityGraph(attributePaths = {"advert", "apartment", "client"})
+    List<Booking> findAll();
 }

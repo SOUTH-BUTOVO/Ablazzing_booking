@@ -5,10 +5,8 @@ import com.javaacademy.flat_rent.dto.ApartmentRsDto;
 import com.javaacademy.flat_rent.service.ApartmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/apartment")
@@ -17,6 +15,7 @@ public class ApartmentController {
     private final ApartmentService apartmentService;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ApartmentRsDto create(@Valid @RequestBody ApartmentRqDto dto) {
         return apartmentService.save(dto);
     }

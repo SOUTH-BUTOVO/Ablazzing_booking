@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,6 +20,7 @@ public class AdvertController {
     private final AdvertService advertService;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public AdvertRsDto create(@Valid @RequestBody AdvertRqDto dto) {
         return advertService.save(dto);
     }

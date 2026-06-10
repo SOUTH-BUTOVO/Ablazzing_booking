@@ -16,7 +16,6 @@
 <!--                    create type advert_status as enum('ACTIVE', 'ARCHIVED');-->
 <!--                end if;-->
 <!--            end $$;-->
-
             do $$
             begin
                 if not exists (select 1 from pg_type where typname = 'apartment_room_count') then

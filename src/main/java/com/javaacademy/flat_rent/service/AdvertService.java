@@ -21,10 +21,7 @@ public class AdvertService {
     public AdvertRsDto save(AdvertRqDto dto) {
         Advert advert = advertMapper.toEntity(dto);
         Advert saved = advertRepository.save(advert);
-        System.out.println(saved);
-        AdvertRsDto rsDto = advertMapper.toDto(saved);
-        System.out.println(rsDto);
-        return rsDto;
+        return advertMapper.toDto(saved);
     }
 
     @Transactional(readOnly = true)
