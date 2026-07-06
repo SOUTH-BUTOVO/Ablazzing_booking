@@ -1,5 +1,6 @@
 package com.javaacademy.flat_rent;
 
+import com.javaacademy.flat_rent.dto.AdvertRqDto;
 import com.javaacademy.flat_rent.dto.BookingRqDto;
 import com.javaacademy.flat_rent.dto.ClientRqDto;
 import com.javaacademy.flat_rent.entity.Booking;
@@ -10,6 +11,7 @@ import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.filter.log.LogDetail;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +29,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -85,9 +88,9 @@ public class BookingControllerIT {
         assertThat(booking.getStartDate()).isToday();
         assertThat(booking.getEndDate()).isEqualTo(body.endDate());
         assertThat(booking.getTotalPrice()).isEqualTo(BigDecimal.valueOf(ChronoUnit.DAYS.between(
-                        body.startDate(),
-                        body.endDate())).multiply(
-                        booking.getAdvert().getPrice()));
+                body.startDate(),
+                body.endDate())).multiply(
+                booking.getAdvert().getPrice()));
 
         assertThat(booking.getClient().getId()).isNotNull();
         assertThat(booking.getClient().getName()).isEqualTo("Oleg");
@@ -122,8 +125,8 @@ public class BookingControllerIT {
                 .statusCode(200)
                 .body("content.size()", is(1))
                 .body("content[0].id", is(1))
-                .body("content[0].date_start", is("2026-06-10"))
-                .body("content[0].date_finish", is("2026-06-11"))
+                .body("content[0].date_start", is("2026-10-01"))
+                .body("content[0].date_finish", is("2026-10-10"))
                 .body("content[0].client.id", is(1))
                 .body("content[0].client.name", is("Oleg"))
                 .body("content[0].client.email", is("test1@mail.ru"))
@@ -146,5 +149,105 @@ public class BookingControllerIT {
                 .body("pageable.sort.sorted", is(true))
                 .body("totalElements", is(1))
                 .body("totalPages", is(1));
+    }
+
+    @Test
+    @DisplayName("Неуспешное бронирование при существующем бронировании")
+    @Sql(value = "/clearBookingAdvertApartmentClient.sql", executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(value = "/createClientAdvertApartmentBooking.sql", executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
+    public void expectedBookingFailure1() {
+        Booking booking = bookingRepository.findAll().get(0);
+        assertThat(booking.getStartDate()).isEqualTo(LocalDate.of(2026, 10, 1));
+        assertThat(booking.getEndDate()).isEqualTo(LocalDate.of(2026, 10, 10));
+
+        ClientRqDto client = new ClientRqDto(null, "Petr", "petr@mail.com");
+
+        BookingRqDto body = new BookingRqDto(
+                null,
+                LocalDate.of(2026, 10, 5),
+                LocalDate.of(2026, 10, 6),
+                client,
+                1L);
+
+        RestAssured.given()
+                .spec(reqSpec)
+                .body(body)
+                .post("/booking")
+                .then()
+                .spec(resSpec)
+                .statusCode(409);
+    }
+
+    @Test
+    @DisplayName("Неуспешное бронирование при существующем бронировании")
+    @Sql(value = "/clearBookingAdvertApartmentClient.sql", executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(value = "/createClientAdvertApartmentBooking.sql", executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
+    public void expectedBookingFailure2() {
+        Booking booking = bookingRepository.findAll().get(0);
+        assertThat(booking.getStartDate()).isEqualTo(LocalDate.of(2026, 10, 1));
+        assertThat(booking.getEndDate()).isEqualTo(LocalDate.of(2026, 10, 10));
+
+        ClientRqDto client = new ClientRqDto(null, "Petr", "petr@mail.com");
+
+        BookingRqDto body = new BookingRqDto(
+                null,
+                LocalDate.of(2026, 9, 29),
+                LocalDate.of(2026, 10, 2),
+                client,
+                1L);
+
+        RestAssured.given()
+                .spec(reqSpec)
+                .body(body)
+                .post("/booking")
+                .then()
+                .spec(resSpec)
+                .statusCode(409);
+    }
+
+    @Test
+    @DisplayName("Неуспешное бронирование при пересекающихся датах")
+    @Sql(value = {"/clearBookingAdvertApartmentClient.sql", "/createClientAdvertApartmentBooking.sql"},
+            executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
+    //@Sql(value = "/createClientAdvertApartmentBooking.sql", executionPhase = ExecutionPhase.BEFORE_TEST_METHOD)
+    public void expectedBookingFailure3() {
+        assertThat(bookingRepository.count()).isEqualTo(3);
+        Booking booking = bookingRepository.findById(1L).orElseThrow();
+        assertThat(booking.getStartDate()).isEqualTo(LocalDate.of(2026, 10, 1));
+        assertThat(booking.getEndDate()).isEqualTo(LocalDate.of(2026, 10, 10));
+
+        ClientRqDto client = new ClientRqDto(null, "Petr", "petr@mail.com");
+
+        BookingRqDto body = new BookingRqDto(
+                null,
+                LocalDate.of(2026, 10, 9),
+                LocalDate.of(2026, 10, 11),
+                client,
+                1L);
+
+        RestAssured.given()
+                .spec(reqSpec)
+                .body(body)
+                .post("/booking")
+                .then()
+                .spec(resSpec)
+                .statusCode(409) // <-- Теперь ждем 409, а не 500
+                .contentType(ContentType.JSON) // <-- Гарантируем, что тип контента JSON
+                .body("message", is("Date is occupied")) // <-- Проверяем поле message внутри JSON
+        ;
+
+        assertThat(bookingRepository.count()).isEqualTo(3); // добавил проверку убедиться, что новых записей
+        // не появилось. Тогда тест будет гарантировать не только HTTP-ответ, но и отсутствие побочного эффекта.
+
+        // Что это делает:
+        // 1 Когда в сервисе (BookingService) выбрасывается throw new EntityExistsException("Date is occupied"),
+        // выполнение прерывается.
+        // 2 Spring видит, что есть @ControllerAdvice, и передает управление в метод handleEntityExistsException.
+        // 3 Метод упаковывает текст ошибки в JSON и ставит статус 409.
+        // 4 Клиент (твой тест) получает чистый JSON, а не HTML-страницу со стеком ошибок.
+
+        // EntityExistsException — это бизнес-ошибка (пользователь пытается забронировать занятые даты), а не ошибка
+        // сервера. По стандартам REST для таких случаев используют статус 409 Conflict или 400 Bad Request. Статус
+        // 500 сбивает с толку клиента API, заставляя его думать, что упал сервер.
     }
 }

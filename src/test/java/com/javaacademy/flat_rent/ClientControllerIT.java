@@ -1,5 +1,6 @@
 package com.javaacademy.flat_rent;
 
+import com.javaacademy.flat_rent.repository.BookingRepository;
 import com.javaacademy.flat_rent.repository.ClientRepository;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
@@ -23,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class ClientControllerIT {
     @Autowired
     ClientRepository clientRepository;
+    @Autowired
+    BookingRepository bookingRepository;
 
     @LocalServerPort
     private int port;
@@ -58,5 +61,30 @@ public class ClientControllerIT {
 
         assertTrue(clientRepository.findById(1L).isEmpty());
         assertThat(clientRepository.findById(1L)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Удаление связанных броней при удалении клиента")
+    @Sql(value = {"/clearBookingAdvertApartmentClient.sql", "/createClientAdvertApartmentBooking.sql"},
+            executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    public void deletedClientShouldDeletedHisBooking() {
+        assertThat(clientRepository.count()).isEqualTo(3);
+        // добавил зависимость bookingRepository
+        assertThat(bookingRepository.count()).isEqualTo(3);
+        assertThat(clientRepository.existsById(1L)).isTrue();
+        assertThat(bookingRepository.existsById(1L)).isNotNull();
+
+        RestAssured
+                .given()
+                .spec(reqSpec)
+                .delete("/client/{id}", 1L)
+                .then()
+                .spec(resSpec)
+                .statusCode(204);
+
+        assertThat(clientRepository.count()).isEqualTo(2);
+        assertThat(bookingRepository.count()).isEqualTo(2);
+        assertThat(clientRepository.existsById(1L)).isFalse();
+        assertThat(bookingRepository.existsById(1L)).isFalse();
     }
 }
