@@ -1,9 +1,11 @@
 package com.javaacademy.flat_rent.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 
+@Schema(description = "Ответ объявление")
 public record AdvertRsDto(Long id,
                           BigDecimal price,
                           @JsonProperty(value = "is_active")

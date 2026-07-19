@@ -1,4 +1,4 @@
-package com.javaacademy.flat_rent.controller;
+package com.javaacademy.flat_rent.exception;
 
 import com.javaacademy.flat_rent.dto.ErrorResponse;
 import jakarta.persistence.EntityExistsException;
@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 // 2. Создаю обработчик исключений, который будет перехватывать EntityExistsException и превращать его в 409.
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
     // В проде никогда не позволяют стеку исключения (stack trace) уходить клиенту. Это утечка информации о
     // структуре проекта. Все исключения ловятся в одном месте и конвертируются в понятный JSON-ответ.
 
@@ -25,38 +24,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityExistsException.class)
     public ResponseEntity<ErrorResponse> handleEntityExistsException(EntityExistsException ex) {
-        // Создаем красивый объект ответа
+        // Создаю красивый объект ответа
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
                 ex.getMessage()) // Берем сообщение из исключения ("Date is occupied")
                 ;
 
-        // Возвращаем объект со статусом 409 (CONFLICT)
+        // Возвращаю объект со статусом 409 (CONFLICT)
         return ResponseEntity
                 .status(HttpStatus.CONFLICT.value())
                 .body(error);
     }
-
-    // Можно сделать универсальный метод (если появится: EntityExistsException, EntityNotFoundException,
-    // IllegalArgumentException, MethodArgumentNotValidException, ...) для каждой писать new ErrorResponse(...)
-    // будет много дублирования. Обычно делают:
-    //
-    // private ErrorResponse buildError(
-    //        HttpStatus status,
-    //        String message,
-    //        HttpServletRequest request) {
-    //    return new ErrorResponse(
-    //            LocalDateTime.now(),
-    //            status.value(),
-    //            status.getReasonPhrase(),
-    //            message,
-    //            request.getRequestURI()); }
-    //
-    // Тогда обработчики становятся маленькими:
-    // @ExceptionHandler(EntityExistsException.class)
-    // public ResponseEntity<ErrorResponse> handle(...) {
-    //    return ResponseEntity
-    //            .status(CONFLICT)
-    //            .body(buildError(...)); }
 }
